@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#8b6f47" />
+  <title>Mak Lifts</title>
+  <style>
+    :root {
+      --bg: #f8f3ea;
+      --card: #fffaf2;
+      --card2: #f1e5d2;
+      --text: #2d261f;
+      --muted: #756957;
+      --accent: #8b6f47;
+      --accent2: #b58b5b;
+      --green: #5f8f66;
+      --red: #b5655d;
+      --yellow: #d6aa4c;
+      --border: #e2d2bb;
+      --shadow: 0 8px 24px rgba(65, 44, 23, .10);
+      --radius: 18px;
+      --tap: 44px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #f8f3ea 0%, #efe1ce 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 88px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+      background: rgba(248, 243, 234, .94);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(226, 210, 187, .8);
+    }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    h1 { margin: 0; font-size: 1.35rem; letter-spacing: -.02em; }
+    .sub { color: var(--muted); font-size: .86rem; margin-top: 2px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--card2); border: 1px solid var(--border); border-radius: 999px;
+      padding: 8px 10px; font-size: .86rem; font-weight: 700;
+    }
+
+    main { padding: 14px; max-width: 680px; margin: 0 auto; }
+    .tab-panel { display: none; animation: fade .18s ease; }
+    .tab-panel.active { display: block; }
+    @keyframes fade { from { opacity: .4; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    nav {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      z-index: 50;
+      padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+      background: rgba(255, 250, 242, .96);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px;
+    }
+    .nav-btn {
+      min-height: 54px; border: 0; border-radius: 16px; background: transparent; color: var(--muted);
+      font-weight: 700; font-size: .68rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    }
+    .nav-btn span:first-child { font-size: 1.1rem; }
+    .nav-btn.active { background: var(--card2); color: var(--text); }
+
+    .card {
+      background: rgba(255,250,242,.96); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow);
+    }
+    .card.flat { box-shadow: none; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .row.wrap { flex-wrap: wrap; }
+    .stack { display: grid; gap: 10px; }
+    h2 { font-size: 1.1rem; margin: 0 0 10px; }
+    h3 { font-size: 1rem; margin: 0; }
+    p { margin: 6px 0; }
+    .muted { color: var(--muted); font-size: .9rem; }
+    .tiny { color: var(--muted); font-size: .78rem; }
+    .emoji { font-size: 1.5rem; line-height: 1; }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+    button { cursor: pointer; }
+    .btn {
+      min-height: var(--tap); border: 1px solid var(--border); border-radius: 14px; padding: 9px 12px;
+      background: var(--card); color: var(--text); font-weight: 800;
+    }
+    .btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn.green { background: var(--green); color: white; border-color: var(--green); }
+    .btn.red { background: var(--red); color: white; border-color: var(--red); }
+    .btn.ghost { background: transparent; box-shadow: none; }
+    .btn.small { min-height: 34px; padding: 6px 9px; font-size: .82rem; border-radius: 12px; }
+    .chip-row { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: none; }
+    .chip-row::-webkit-scrollbar { display:none; }
+    .chip-row.wrap { flex-wrap: wrap; overflow-x: visible; }
+    .chip {
+      white-space: nowrap; border: 1px solid var(--border); background: var(--card); border-radius: 999px;
+      padding: 9px 12px; font-weight: 800; min-height: 38px;
+    }
+    .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    input, textarea, select {
+      width: 100%; border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px;
+      background: #fffdf8; color: var(--text); min-height: 42px;
+    }
+    textarea { min-height: 84px; resize: vertical; }
+    label { font-weight: 800; font-size: .82rem; color: var(--muted); display: block; margin-bottom: 4px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+    .progressbar { height: 12px; border-radius: 999px; background: #e7d9c5; overflow: hidden; }
+    .progressbar > div { height: 100%; background: var(--green); width: 0%; transition: width .25s ease; }
+
+    .slot-card, .exercise-card, .template-card, .library-item {
+      border: 1px solid var(--border); border-radius: 16px; background: #fffdf8; padding: 12px; margin: 9px 0;
+    }
+    .slot-card.done, .exercise-card.done { background: #edf5e9; border-color: #b9d5b7; }
+    .slot-card.active-workout { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(139,111,71,.15); }
+    .title-line { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .title-line strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 8px; background: var(--card2); color: var(--muted); font-size: .76rem; font-weight: 800; }
+    .pill.green { background: #e3f0dc; color: #38673d; }
+    .pill.yellow { background: #faedcc; color: #74510d; }
+
+    .exercise-details { display:none; margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 12px; }
+    .exercise-card.open .exercise-details { display:block; }
+    .set-row { display:grid; grid-template-columns: 60px 1fr 1fr; gap: 8px; align-items:center; margin-bottom: 8px; }
+    .set-row span { font-weight: 800; color: var(--muted); }
+
+    .modal-backdrop {
+      display:none; position:fixed; inset:0; z-index:100; background:rgba(37,28,20,.34);
+      padding: 20px 12px; align-items:flex-end;
+    }
+    .modal-backdrop.show { display:flex; }
+    .modal {
+      width:100%; max-width:680px; max-height:88vh; overflow:auto; margin:0 auto; background:var(--bg);
+      border:1px solid var(--border); border-radius:24px 24px 18px 18px; padding:14px; box-shadow:0 18px 60px rgba(0,0,0,.25);
+    }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .modal-header h2 { margin:0; }
+
+    .empty { text-align:center; color:var(--muted); padding:18px; border:1px dashed var(--border); border-radius:16px; background:rgba(255,255,255,.45); }
+    .danger-zone { border-color:#e2b7b2; background:#fff6f4; }
+    .toast {
+      position: fixed; left: 50%; bottom: calc(82px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(12px);
+      z-index: 200; background: var(--text); color: #fff; border-radius: 999px; padding: 10px 14px;
+      font-weight: 800; font-size: .88rem; opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (min-width: 700px) {
+      nav { max-width: 680px; left: 50%; transform: translateX(-50%); border-radius: 24px 24px 0 0; border-left:1px solid var(--border); border-right:1px solid var(--border); }
+      main { padding-top: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div>
+        <h1>🏋️‍♀️ Mak Lifts</h1>
+        <div class="sub" id="headerSub">Cozy gym planner</div>
+      </div>
+      <div class="badge" id="weekBadge">0/4</div>
+    </div>
+  </header>
+
+  <main>
+    <section id="today" class="tab-panel active"></section>
+    <section id="plan" class="tab-panel"></section>
+    <section id="templates" class="tab-panel"></section>
+    <section id="exercises" class="tab-panel"></section>
+    <section id="progress" class="tab-panel"></section>
+    <section id="settings" class="tab-panel"></section>
+  </main>
+
+  <nav>
+    <button class="nav-btn active" data-tab="today"><span>✨</span><span>Today</span></button>
+    <button class="nav-btn" data-tab="plan"><span>🗓️</span><span>Plan</span></button>
+    <button class="nav-btn" data-tab="templates"><span>📋</span><span>Templates</span></button>
+    <button class="nav-btn" data-tab="exercises"><span>🏋️</span><span>Exercises</span></button>
+    <button class="nav-btn" data-tab="progress"><span>📈</span><span>Progress</span></button>
+    <button class="nav-btn" data-tab="settings"><span>⚙️</span><span>Settings</span></button>
+  </nav>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+  </div>
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = 'makLifts.v1';
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    const uid = () => Math.random().toString(36).slice(2, 10);
+    const todayISO = () => new Date().toISOString().slice(0,10);
+    const escapeHtml = (str='') => String(str).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
+    const groups = [
+      ['Quads','🦵'], ['Glutes','🍑'], ['Hamstrings','🐷'], ['Calves','🐄'], ['Back','🪽'], ['Chest','🧲'], ['Shoulders','🎯'], ['Biceps','💪'], ['Triceps','🧱'], ['Forearms','🤌'], ['Core','🔥'], ['Cardio','🫀'], ['Mobility / Other','🧘']
+    ];
+    const groupEmoji = Object.fromEntries(groups);
+
+    const seedExercises = [
+      ['Plate loaded leg press','Quads','strength','45lbs + 45lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual','Shared / alternate sets with Ty if needed.'],
+      ['Hip thrusts','Glutes','strength','25lbs + 10lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual','If hip thrust machine is taken, do RDL first.'],
+      ['Smith RDL','Hamstrings','strength','30lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual','Posterior chain focus.'],
+      ['DB Bulgarian split squat','Glutes','strength','No weight',3,'12-15','Increase reps first, then add dumbbells','manual',''],
+      ['Machine calf extension','Calves','strength','100lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
+      ['Leg extension','Quads','strength','70lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
+      ['Leg curl','Hamstrings','strength','70lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
+      ['Hip abductor','Glutes','strength','100lbs',3,'12-15','Increase after 15 reps all sets with good form','10','While Ty benches, I can do this.'],
+      ['Hip adductor','Glutes','strength','100lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
+      ['Elevated knee crunch','Core','strength','Level 6',3,'12-15','Increase after 15 reps all sets with good form','manual',''],
+      ['Ab crunch','Core','strength','40lbs',3,'15-20','Increase after 20 reps all sets with good form','10',''],
+      ['Incline walk','Cardio','cardio','3mph, 5% incline',0,'','Log time/speed/incline/distance','',''],
+      ['Lat pulldown','Back','strength','100lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
+      ['Seated cable rows','Back','strength','85lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
+      ['Makeshift T-bar row','Back','strength','70lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
+      ['Cable pullover','Back','strength','60lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
+      ['Bayesian curl','Biceps','strength','25lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
+      ['Rope hammer curl','Biceps','strength','40lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
+      ['Machine preacher curl','Biceps','strength','45lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
+      ['DB wrist curl & reverse wrist curl','Forearms','strength','10lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
+      ['Stair stepper','Cardio','cardio','Level 4',0,'','Log time/level/distance','',''],
+      ['Smith machine/benching','Chest','strength','20lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual','While Ty benches, use backup movement if needed.'],
+      ['Pec dec','Chest','strength','70lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
+      ['Shoulder press','Shoulders','strength','60lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
+      ['Cable lat raises','Shoulders','strength','15lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
+      ['Single arm cable pushdowns','Triceps','strength','35lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
+      ['Straight bar overhead extensions','Triceps','strength','30lbs',3,'12-15','Increase after 15 reps all sets with good form','5','']
+    ].map(([name, group, type, setup, sets, reps, rule, addAmount, notes]) => ({ id: uid(), name, group, emoji: groupEmoji[group] || '🏋️', type, setup, sets, reps, rule, addAmount, notes }));
+
+    function exByName(name, exercises) {
+      const ex = exercises.find(e => e.name === name);
+      return ex ? { exerciseId: ex.id, custom: false, done: false, notes: ex.notes || '' } : null;
+    }
+
+    function makeDefaultData() {
+      const exercises = structuredClone(seedExercises);
+      const t = (name, emoji, names) => ({ id: uid(), name, emoji, exercises: names.map(n => exByName(n, exercises)).filter(Boolean) });
+      const templates = [
+        t('Legs Day · Original','🦵',['Plate loaded leg press','Hip thrusts','Smith RDL','DB Bulgarian split squat','Machine calf extension','Leg extension','Leg curl','Hip abductor','Hip adductor','Elevated knee crunch','Ab crunch','Incline walk']),
+        t('Pull Day · Original','🪽',['Lat pulldown','Seated cable rows','Makeshift T-bar row','Cable pullover','Bayesian curl','Rope hammer curl','Machine preacher curl','DB wrist curl & reverse wrist curl','Stair stepper']),
+        t('Upper Day · Original','🧲',['Smith machine/benching','Lat pulldown','Seated cable rows','Cable pullover','Pec dec','Shoulder press','Cable lat raises','Single arm cable pushdowns','Straight bar overhead extensions','Bayesian curl','Machine preacher curl','Stair stepper']),
+        t('Glutes / Lower Day','🍑',['Hip thrusts','Smith RDL','DB Bulgarian split squat','Hip abductor','Leg curl','Machine calf extension','Incline walk'])
+      ];
+      const slots = [1,2,3,4].map((n,i) => ({ id: uid(), label:`Workout ${n}`, templateId: templates[i]?.id || null, emoji: templates[i]?.emoji || '🏋️', name: templates[i]?.name.replace(' · Original','') || `Workout ${n}`, status:'planned', startedAt:null, finishedAt:null, exercises: cloneTemplateExercises(templates[i]) }));
+      return { version: 1, weeklyGoal: 4, weekStart: getWeekStart(), exercises, templates, slots, activeSlotId: null, logs: [], exerciseFilter: 'All', theme: 'cozy' };
+    }
+
+    function cloneTemplateExercises(template) {
+      if (!template) return [];
+      return template.exercises.map(item => ({...item, instanceId: uid(), done:false, setLogs:[], cardioLog:null }));
+    }
+
+    function getWeekStart(date = new Date()) {
+      const d = new Date(date); const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      d.setDate(diff); d.setHours(0,0,0,0); return d.toISOString().slice(0,10);
+    }
+
+    let data = loadData();
+    let currentTab = 'today';
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return makeDefaultData();
+        const parsed = JSON.parse(raw);
+        if (!parsed.exercises?.length) return makeDefaultData();
+        if (parsed.weekStart !== getWeekStart()) {
+          parsed.weekStart = getWeekStart();
+          parsed.slots = parsed.slots.map(s => ({...s, status:'planned', startedAt:null, finishedAt:null, exercises:s.exercises.map(e=>({...e, done:false, setLogs:[], cardioLog:null}))}));
+          parsed.activeSlotId = null;
+        }
+        return parsed;
+      } catch { return makeDefaultData(); }
+    }
+    function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    function save() { persist(); render(); }
+    function showToast(message) {
+      const toast = $('#toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    function getExercise(item) {
+      if (item.custom) return item;
+      return data.exercises.find(e => e.id === item.exerciseId) || { name:'Deleted exercise', emoji:'❓', type:'strength', setup:'', sets:3, reps:'12-15', group:'Other', rule:'' };
+    }
+    function lastLogForExercise(exId) {
+      return [...data.logs].reverse().find(l => l.exerciseId === exId);
+    }
+    function completedCount() { return data.slots.filter(s => s.status === 'done').length; }
+    function activeSlot() { return data.slots.find(s => s.id === data.activeSlotId) || data.slots.find(s => s.status === 'started'); }
+
+    function setTab(tab) {
+      currentTab = tab;
+      $$('.tab-panel').forEach(p => p.classList.toggle('active', p.id === tab));
+      $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      render();
+    }
+
+    $$('.nav-btn').forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
+
+    function render() {
+      $('#weekBadge').textContent = `${completedCount()}/${data.weeklyGoal}`;
+      $('#headerSub').textContent = currentTab === 'today' ? 'Today\'s workout, minus the clutter' : 'Cozy gym planner';
+      renderToday(); renderPlan(); renderTemplates(); renderExercises(); renderProgress(); renderSettings();
+    }
+
+    function renderToday() {
+      const el = $('#today');
+      const active = activeSlot();
+      el.innerHTML = `
+        <div class="card">
+          <div class="row">
+            <div>
+              <h2>This week</h2>
+              <div class="muted">${completedCount()}/${data.weeklyGoal} workouts completed</div>
+            </div>
+            <button class="btn small" data-action="reset-week">Reset week</button>
+          </div>
+          <div class="progressbar" style="margin-top:12px"><div style="width:${Math.min(100, completedCount()/data.weeklyGoal*100)}%"></div></div>
+        </div>
+        <div class="card">
+          <h2>Choose today\'s workout</h2>
+          <div class="chip-row">${data.slots.map(s => `<button class="chip ${active?.id===s.id?'active':''}" onclick="chooseToday('${s.id}', event)">${s.emoji} ${escapeHtml(s.label)}${s.status==='done'?' ✓':''}</button>`).join('')}</div>
+          ${active ? renderWorkoutBlock(active) : `<div class="empty">Pick a workout slot to start. No dropdown goblins here.</div>`}
+        </div>`;
+    }
+
+    function renderWorkoutBlock(slot) {
+      const done = slot.exercises.filter(e=>e.done).length;
+      return `
+        <div class="slot-card active-workout">
+          <div class="row wrap">
+            <div class="title-line"><span class="emoji">${slot.emoji}</span><div><strong>${escapeHtml(slot.name)}</strong><div class="tiny">${done}/${slot.exercises.length} exercises done</div></div></div>
+            <div class="row wrap">
+              ${slot.status === 'started' ? `<button class="btn green small" onclick="finishWorkout('${slot.id}')">Finish</button>` : `<button class="btn primary small" onclick="startWorkout('${slot.id}')">Start</button>`}
+              <button class="btn small" onclick="openAddExerciseToSlot('${slot.id}')">+ Exercise</button>
+            </div>
+          </div>
+        </div>
+        <div class="stack">${slot.exercises.map(item => renderExerciseCard(item, slot.id)).join('')}</div>`;
+    }
+
+    function renderExerciseCard(item, slotId) {
+      const ex = getExercise(item);
+      const last = item.custom ? null : lastLogForExercise(ex.id);
+      const lastText = last ? (last.type === 'cardio' ? `${last.date}: ${last.cardio?.time || ''} ${last.cardio?.distance || ''}` : `${last.date}: ${last.weight} · ${last.reps?.join('/') || ''}`) : 'No previous log';
+      const openClass = item.open ? 'open' : '';
+      return `<div class="exercise-card ${item.done?'done':''} ${openClass}" id="card-${item.instanceId}">
+        <div class="row">
+          <div class="title-line"><span class="emoji">${ex.emoji}</span><div><strong>${escapeHtml(ex.name)}</strong><div class="tiny">${escapeHtml(ex.setup || '')} · ${ex.type === 'cardio' ? 'Cardio' : `${ex.sets || 3} sets · ${escapeHtml(ex.reps || '12-15')}`}</div></div></div>
+          <span class="pill ${item.done?'green':''}">${item.done?'Done':'Open'}</span>
+        </div>
+        <div class="muted" style="margin-top:8px">Last: ${escapeHtml(lastText)}</div>
+        ${item.notes ? `<div class="pill yellow" style="margin-top:8px">🤝 ${escapeHtml(item.notes)}</div>` : ''}
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn small" onclick="toggleExercise('${slotId}','${item.instanceId}')">${ex.type === 'cardio' ? 'Open Cardio' : 'Open Log'}</button>
+          ${ex.type === 'strength' ? `<button class="btn small" onclick="addWeight('${ex.id || item.instanceId}', '${item.instanceId}')">Add Weight</button>` : ''}
+          <button class="btn small" onclick="toggleDone('${slotId}','${item.instanceId}')">${item.done?'Undo Done':'Mark Done'}</button>
+        </div>
+        <div class="exercise-details">
+          ${ex.type === 'cardio' ? renderCardioInputs(item, slotId, ex) : renderStrengthInputs(item, slotId, ex)}
+        </div>
+      </div>`;
+    }
+
+    function renderStrengthInputs(item, slotId, ex) {
+      const sets = Number(ex.sets || 3);
+      const vals = item.setLogs?.length ? item.setLogs : Array(sets).fill('');
+      return `<div class="stack">
+        ${Array.from({length: sets}).map((_,i)=>`<div class="set-row"><span>Set ${i+1}</span><input inputmode="numeric" placeholder="reps" value="${escapeHtml(vals[i] || '')}" onchange="updateSetLog('${slotId}','${item.instanceId}',${i},this.value)"><input placeholder="weight" value="${escapeHtml(item.weightOverride || ex.setup || '')}" onchange="updateWeightOverride('${slotId}','${item.instanceId}',this.value)"></div>`).join('')}
+        <textarea placeholder="Notes / form / machine taken?" onchange="updateItemNotes('${slotId}','${item.instanceId}',this.value)">${escapeHtml(item.logNotes || '')}</textarea>
+        <button class="btn primary" onclick="saveExerciseLog('${slotId}','${item.instanceId}')">Save Log</button>
+      </div>`;
+    }
+
+    function renderCardioInputs(item, slotId, ex) {
+      const c = item.cardioLog || {};
+      return `<div class="grid2">
+        <div><label>Time</label><input placeholder="20 min" value="${escapeHtml(c.time || '')}" onchange="updateCardio('${slotId}','${item.instanceId}','time',this.value)"></div>
+        <div><label>Speed</label><input placeholder="3mph" value="${escapeHtml(c.speed || '')}" onchange="updateCardio('${slotId}','${item.instanceId}','speed',this.value)"></div>
+        <div><label>Incline</label><input placeholder="5%" value="${escapeHtml(c.incline || '')}" onchange="updateCardio('${slotId}','${item.instanceId}','incline',this.value)"></div>
+        <div><label>Level</label><input placeholder="Level 4" value="${escapeHtml(c.level || '')}" onchange="updateCardio('${slotId}','${item.instanceId}','level',this.value)"></div>
+        <div><label>Distance</label><input placeholder="1.2 mi" value="${escapeHtml(c.distance || '')}" onchange="updateCardio('${slotId}','${item.instanceId}','distance',this.value)"></div>
+        <div><label>Setup</label><input value="${escapeHtml(ex.setup || '')}" disabled></div>
+        <div style="grid-column:1/-1"><label>Notes</label><textarea onchange="updateCardio('${slotId}','${item.instanceId}','notes',this.value)">${escapeHtml(c.notes || '')}</textarea></div>
+        <button class="btn primary" style="grid-column:1/-1" onclick="saveExerciseLog('${slotId}','${item.instanceId}')">Log Cardio</button>
+      </div>`;
+    }
+
+    function renderPlan() {
+      $('#plan').innerHTML = `<div class="card"><h2>Flexible 4-day plan</h2><p class="muted">Load templates, swap order, or skip whatever day life/Ty\'s work schedule messes with.</p>${data.slots.map((s,i)=>renderSlot(s,i)).join('')}</div>`;
+    }
+    function renderSlot(s, i) {
+      return `<div class="slot-card ${s.status==='done'?'done':''}">
+        <div class="row"><div class="title-line"><span class="emoji">${s.emoji}</span><div><strong>${escapeHtml(s.label)}</strong><div class="tiny">${escapeHtml(s.name)} · ${s.status}</div></div></div><span class="pill">${s.exercises.length} moves</span></div>
+        <div class="row wrap" style="margin-top:10px">
+          <button class="btn small primary" onclick="chooseToday('${s.id}', event);setTab('today')">Use Today</button>
+          <button class="btn small" onclick="openLoadTemplate('${s.id}')">Load Template</button>
+          <button class="btn small" onclick="moveSlot(${i},-1)">↑</button>
+          <button class="btn small" onclick="moveSlot(${i},1)">↓</button>
+          <button class="btn small" onclick="skipSlot('${s.id}')">Skip/Move</button>
+          <button class="btn small" onclick="saveSlotAsTemplate('${s.id}')">Save as Template</button>
+        </div>
+      </div>`;
+    }
+
+    function renderTemplates() {
+      $('#templates').innerHTML = `<div class="card"><div class="row"><h2>Templates</h2><button class="btn primary small" onclick="openTemplateEditor()">+ Template</button></div>${data.templates.map(t=>`<div class="template-card"><div class="row"><div class="title-line"><span class="emoji">${t.emoji}</span><div><strong>${escapeHtml(t.name)}</strong><div class="tiny">${t.exercises.length} exercises</div></div></div><button class="btn small" onclick="openTemplateEditor('${t.id}')">Edit</button></div><div class="muted" style="margin-top:8px">${t.exercises.slice(0,4).map(it=>escapeHtml(getExercise(it).name)).join(' · ')}${t.exercises.length>4?'…':''}</div></div>`).join('')}</div>`;
+    }
+
+    function renderExercises() {
+      const filter = data.exerciseFilter || 'All';
+      const q = data.exerciseSearch || '';
+      const filtered = data.exercises.filter(e => (filter==='All'||e.group===filter) && (!q || e.name.toLowerCase().includes(q.toLowerCase())));
+      $('#exercises').innerHTML = `<div class="card"><div class="row"><h2>Exercise Library</h2><button class="btn primary small" onclick="openExerciseEditor()">+ Exercise</button></div><input placeholder="Search exercises" value="${escapeHtml(q)}" oninput="data.exerciseSearch=this.value; save()" style="margin:8px 0"><div class="chip-row wrap"><button class="chip ${filter==='All'?'active':''}" onclick="data.exerciseFilter='All';save()">All</button>${groups.map(([g,e])=>`<button class="chip ${filter===g?'active':''}" onclick="data.exerciseFilter='${escapeHtml(g)}';save()">${e} ${escapeHtml(g)}</button>`).join('')}</div>${filtered.map(e=>`<div class="library-item"><div class="row"><div class="title-line"><span class="emoji">${e.emoji}</span><div><strong>${escapeHtml(e.name)}</strong><div class="tiny">${escapeHtml(e.group)} · ${e.type} · ${escapeHtml(e.setup)}</div></div></div><button class="btn small" onclick="openExerciseEditor('${e.id}')">Edit</button></div><div class="muted">${escapeHtml(e.rule || '')}</div></div>`).join('') || `<div class="empty">No exercises match that filter.</div>`}</div>`;
+    }
+
+    function renderProgress() {
+      const logs = [...data.logs].reverse();
+      const increases = logs.filter(l=>l.increased);
+      $('#progress').innerHTML = `<div class="card"><h2>Recent Logs</h2>${logs.slice(0,20).map(l=>`<div class="library-item"><div class="row"><strong>${escapeHtml(l.exerciseName)}</strong><span class="tiny">${l.date}</span></div><div class="muted">${l.type==='cardio' ? `${escapeHtml(Object.entries(l.cardio||{}).filter(([k,v])=>v).map(([k,v])=>`${k}: ${v}`).join(' · '))}` : `${escapeHtml(l.weight || '')} · reps ${escapeHtml((l.reps||[]).join('/'))}`}</div>${l.readyToIncrease ? `<span class="pill green">Ready to increase</span>` : ''}</div>`).join('') || `<div class="empty">No logs yet. Future Mak will thank present Mak.</div>`}</div><div class="card"><h2>Weight Increases</h2>${increases.slice(0,10).map(l=>`<div class="library-item"><strong>${escapeHtml(l.exerciseName)}</strong><div class="muted">${l.date}: ${escapeHtml(l.weight)}</div></div>`).join('') || `<div class="empty">No increases logged yet.</div>`}</div>`;
+    }
+
+    function renderSettings() {
+      $('#settings').innerHTML = `<div class="card"><h2>Backup</h2><p class="muted">Since this saves locally in your browser, export JSON before clearing data or switching devices.</p><div class="grid2"><button class="btn primary" onclick="exportJSON()">Export JSON</button><button class="btn" onclick="importJSONPrompt()">Import JSON</button></div></div><div class="card"><h2>Week</h2><p class="muted">Resets the 4 workout slots back to planned and clears this week's in-workout checkmarks/log inputs.</p><button id="resetWeekButton" class="btn primary" type="button" onclick="window.resetWeek(event)" data-action="reset-week">Reset Week</button></div><div class="card danger-zone"><h2>Danger zone</h2><p class="muted">This resets everything back to the seeded Mak Lifts starter app.</p><button class="btn red" onclick="resetApp()">Reset App</button></div>`;
+    }
+
+    function chooseToday(id, ev){
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+      const slot = data.slots.find(s => s.id === id);
+      if (!slot) return;
+      data.activeSlotId = id;
+      persist();
+      // Re-render the Today screen immediately so workout chips/cards update without changing tabs.
+      renderToday();
+      renderPlan();
+      $('#weekBadge').textContent = `${completedCount()}/${data.weeklyGoal}`;
+    }
+    function startWorkout(id){ const s=data.slots.find(s=>s.id===id); s.status='started'; s.startedAt=new Date().toISOString(); data.activeSlotId=id; save(); }
+    function finishWorkout(id){ const s=data.slots.find(s=>s.id===id); s.status='done'; s.finishedAt=new Date().toISOString(); data.activeSlotId=id; save(); }
+    function skipSlot(id){ const s=data.slots.find(s=>s.id===id); s.status='skipped'; save(); }
+    function toggleExercise(slotId, inst){ const it = data.slots.find(s=>s.id===slotId).exercises.find(e=>e.instanceId===inst); it.open=!it.open; save(); }
+    function toggleDone(slotId, inst){ const it = data.slots.find(s=>s.id===slotId).exercises.find(e=>e.instanceId===inst); it.done=!it.done; save(); }
+    function updateSetLog(slotId, inst, i, val){ const it=data.slots.find(s=>s.id===slotId).exercises.find(e=>e.instanceId===inst); it.setLogs=it.setLogs||[]; it.setLogs[i]=val; localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    function updateWeightOverride(slotId, inst, val){ const it=data.slots.find(s=>s.id===slotId).exercises.find(e=>e.instanceId===inst); it.weightOverride=val; localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    function updateItemNotes(slotId, inst, val){ const it=data.slots.find(s=>s.id===slotId).exercises.find(e=>e.instanceId===inst); it.logNotes=val; localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    function updateCardio(slotId, inst, key, val){ const it=data.slots.find(s=>s.id===slotId).exercises.find(e=>e.instanceId===inst); it.cardioLog=it.cardioLog||{}; it.cardioLog[key]=val; localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    function saveExerciseLog(slotId, inst){
+      const slot=data.slots.find(s=>s.id===slotId); const it=slot.exercises.find(e=>e.instanceId===inst); const ex=getExercise(it);
+      let ready=false;
+      if(ex.type==='strength') {
+        const reps=(it.setLogs||[]).map(v=>Number(v)).filter(v=>!Number.isNaN(v));
+        const target = ex.name === 'Ab crunch' ? 20 : 15;
+        ready = reps.length >= Number(ex.sets||3) && reps.every(r=>r>=target);
+        data.logs.push({id:uid(), date:todayISO(), workoutName:slot.name, exerciseId:ex.id, exerciseName:ex.name, type:'strength', weight:it.weightOverride||ex.setup, reps, readyToIncrease:ready, notes:it.logNotes||''});
+      } else {
+        data.logs.push({id:uid(), date:todayISO(), workoutName:slot.name, exerciseId:ex.id, exerciseName:ex.name, type:'cardio', cardio:it.cardioLog||{}, notes:it.cardioLog?.notes||''});
+      }
+      it.done=true; it.open=false; save();
+    }
+
+    function addWeight(exId, inst){
+      const ex=data.exercises.find(e=>e.id===exId);
+      if(!ex) return;
+      const simple = String(ex.setup).match(/^(\d+(?:\.\d+)?)\s*lbs?$/i);
+      if(simple && ex.addAmount && !Number.isNaN(Number(ex.addAmount))) {
+        const newWeight = Number(simple[1]) + Number(ex.addAmount);
+        ex.setup = `${newWeight}lbs`;
+        data.logs.push({id:uid(), date:todayISO(), exerciseId:ex.id, exerciseName:ex.name, type:'increase', weight:ex.setup, increased:true});
+        save();
+      } else {
+        const newSetup = prompt('Enter the new weight/setup:', ex.setup || '');
+        if(newSetup !== null) { ex.setup = newSetup; data.logs.push({id:uid(), date:todayISO(), exerciseId:ex.id, exerciseName:ex.name, type:'increase', weight:ex.setup, increased:true}); save(); }
+      }
+    }
+
+    function moveSlot(i, dir){ const j=i+dir; if(j<0||j>=data.slots.length)return; [data.slots[i],data.slots[j]]=[data.slots[j],data.slots[i]]; save(); }
+    function resetWeek(ev){
+      if (ev) { ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation?.(); }
+
+      const newWeekStart = getWeekStart();
+
+      data.weekStart = newWeekStart;
+      data.activeSlotId = null;
+
+      // Rebuild each slot from its assigned template when possible. This is more reliable
+      // than only mutating the current cards, because it clears every started/done/open/log state.
+      data.slots = (data.slots || []).map((slot, index) => {
+        const template = (data.templates || []).find(t => t.id === slot.templateId) || (data.templates || [])[index] || null;
+        return {
+          ...slot,
+          templateId: template?.id || slot.templateId || null,
+          emoji: template?.emoji || slot.emoji || '🏋️',
+          name: template ? template.name.replace(' · Original','') : (slot.name || `Workout ${index + 1}`),
+          status: 'planned',
+          startedAt: null,
+          finishedAt: null,
+          exercises: template
+            ? cloneTemplateExercises(template)
+            : (slot.exercises || []).map(item => ({
+                ...item,
+                instanceId: uid(),
+                done: false,
+                open: false,
+                setLogs: [],
+                cardioLog: null,
+                logNotes: '',
+                weightOverride: ''
+              }))
+        };
+      });
+
+      // Keep older history, but remove logs from the current week.
+      data.logs = (data.logs || []).filter(log => !log.date || log.date < newWeekStart);
+
+      persist();
+      currentTab = 'today';
+      $$('.tab-panel').forEach(p => p.classList.toggle('active', p.id === currentTab));
+      $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
+      render();
+      setTimeout(render, 0);
+      showToast('Week reset — back to 0/4.');
+    }
+    window.resetWeek = resetWeek;
+    function resetApp(){ if(confirm('Reset the whole app? Export first if you want a backup.')) { localStorage.removeItem(STORAGE_KEY); data=makeDefaultData(); save(); } }
+
+    function openModal(html){ const b=$('#modalBackdrop'), m=$('#modal'); m.innerHTML=html; b.classList.add('show'); }
+    function closeModal(){ $('#modalBackdrop').classList.remove('show'); $('#modal').innerHTML=''; }
+    $('#modalBackdrop').addEventListener('click', e => { if(e.target.id==='modalBackdrop') closeModal(); });
+
+    document.addEventListener('click', function(e) {
+      const resetBtn = e.target.closest('[data-action="reset-week"]');
+      if (resetBtn) resetWeek(e);
+    });
+
+    function openLoadTemplate(slotId){
+      openModal(`<div class="modal-header"><h2>Load template</h2><button class="btn small" onclick="closeModal()">Close</button></div>${data.templates.map(t=>`<div class="template-card"><div class="row"><div class="title-line"><span class="emoji">${t.emoji}</span><strong>${escapeHtml(t.name)}</strong></div><button class="btn primary small" onclick="loadTemplateToSlot('${slotId}','${t.id}')">Load</button></div></div>`).join('')}`);
+    }
+    function loadTemplateToSlot(slotId, templateId){ const slot=data.slots.find(s=>s.id===slotId); const t=data.templates.find(t=>t.id===templateId); slot.templateId=t.id; slot.emoji=t.emoji; slot.name=t.name.replace(' · Original',''); slot.exercises=cloneTemplateExercises(t); closeModal(); save(); }
+    function saveSlotAsTemplate(slotId){ const s=data.slots.find(s=>s.id===slotId); const name=prompt('Template name:', s.name); if(!name)return; data.templates.push({id:uid(), name, emoji:s.emoji, exercises:s.exercises.map(({instanceId,done,open,setLogs,cardioLog,...rest})=>rest)}); save(); }
+
+    function openAddExerciseToSlot(slotId){
+      openModal(`<div class="modal-header"><h2>Add exercise</h2><button class="btn small" onclick="closeModal()">Close</button></div><div class="chip-row wrap">${groups.map(([g,e])=>`<button class="chip" onclick="filterModalExercises('${slotId}','${escapeHtml(g)}')">${e} ${escapeHtml(g)}</button>`).join('')}</div><div id="modalExerciseList">${modalExerciseList(slotId, 'All')}</div><button class="btn" onclick="openCustomForSlot('${slotId}')">+ Custom exercise</button>`);
+    }
+    function filterModalExercises(slotId, group){ $('#modalExerciseList').innerHTML = modalExerciseList(slotId, group); }
+    function modalExerciseList(slotId, group){ return data.exercises.filter(e=>group==='All'||e.group===group).map(e=>`<div class="library-item"><div class="row"><div class="title-line"><span class="emoji">${e.emoji}</span><div><strong>${escapeHtml(e.name)}</strong><div class="tiny">${escapeHtml(e.setup)}</div></div></div><button class="btn primary small" onclick="addExerciseToSlot('${slotId}','${e.id}')">Add</button></div></div>`).join(''); }
+    function addExerciseToSlot(slotId, exId){ data.slots.find(s=>s.id===slotId).exercises.push({exerciseId:exId, custom:false, done:false, instanceId:uid(), setLogs:[], cardioLog:null}); closeModal(); save(); }
+
+    function openExerciseEditor(id){
+      const e = id ? data.exercises.find(x=>x.id===id) : {id:'', name:'', group:'Quads', emoji:'🦵', type:'strength', setup:'', sets:3, reps:'12-15', rule:'Increase after 15 reps all sets with good form', addAmount:'10', notes:''};
+      openModal(`<div class="modal-header"><h2>${id?'Edit':'Add'} exercise</h2><button class="btn small" onclick="closeModal()">Close</button></div><div class="stack">
+        <div class="grid2"><div><label>Emoji</label><input id="exEmoji" value="${escapeHtml(e.emoji)}"></div><div><label>Type</label><select id="exType"><option ${e.type==='strength'?'selected':''}>strength</option><option ${e.type==='cardio'?'selected':''}>cardio</option></select></div></div>
+        <div><label>Name</label><input id="exName" value="${escapeHtml(e.name)}"></div>
+        <div><label>Group</label><select id="exGroup">${groups.map(([g,em])=>`<option ${e.group===g?'selected':''}>${escapeHtml(g)}</option>`).join('')}</select></div>
+        <div><label>Weight/setup</label><input id="exSetup" value="${escapeHtml(e.setup)}"></div>
+        <div class="grid2"><div><label>Sets</label><input id="exSets" inputmode="numeric" value="${escapeHtml(e.sets)}"></div><div><label>Rep range</label><input id="exReps" value="${escapeHtml(e.reps)}"></div></div>
+        <div><label>Increase rule</label><input id="exRule" value="${escapeHtml(e.rule)}"></div>
+        <div><label>Add amount</label><input id="exAdd" value="${escapeHtml(e.addAmount)}"></div>
+        <div><label>Notes / partner sync</label><textarea id="exNotes">${escapeHtml(e.notes)}</textarea></div>
+        <button class="btn primary" onclick="saveExerciseEditor('${id||''}')">Save Exercise</button>
+        ${id?`<button class="btn red" onclick="deleteExercise('${id}')">Delete Exercise</button>`:''}
+      </div>`);
+    }
+    function saveExerciseEditor(id){
+      const group=$('#exGroup').value;
+      const obj={ id:id||uid(), emoji:$('#exEmoji').value||groupEmoji[group]||'🏋️', name:$('#exName').value.trim(), group, type:$('#exType').value, setup:$('#exSetup').value, sets:Number($('#exSets').value)||0, reps:$('#exReps').value, rule:$('#exRule').value, addAmount:$('#exAdd').value, notes:$('#exNotes').value };
+      if(!obj.name) return alert('Exercise needs a name.');
+      if(id){ Object.assign(data.exercises.find(e=>e.id===id), obj); } else data.exercises.push(obj);
+      closeModal(); save();
+    }
+    function deleteExercise(id){ if(confirm('Delete this exercise from library? Existing template references may show as deleted.')) { data.exercises=data.exercises.filter(e=>e.id!==id); closeModal(); save(); } }
+
+    function openTemplateEditor(id){
+      const t = id ? data.templates.find(x=>x.id===id) : {id:'', name:'', emoji:'📋', exercises:[]};
+      window.editingTemplate = structuredClone(t);
+      openModal(templateEditorHTML());
+    }
+    function templateEditorHTML(){
+      const t=window.editingTemplate;
+      return `<div class="modal-header"><h2>${t.id?'Edit':'Add'} template</h2><button class="btn small" onclick="closeModal()">Close</button></div><div class="stack">
+        <div class="grid2"><div><label>Emoji</label><input id="tplEmoji" value="${escapeHtml(t.emoji)}" oninput="window.editingTemplate.emoji=this.value"></div><div><label>Name</label><input id="tplName" value="${escapeHtml(t.name)}" oninput="window.editingTemplate.name=this.value"></div></div>
+        <h3>Exercises</h3>
+        <div id="tplItems">${templateItemsHTML()}</div>
+        <button class="btn" onclick="openTemplateAddExercise()">+ Add from Library</button>
+        <button class="btn" onclick="addCustomToTemplate()">+ Add Custom Exercise</button>
+        <button class="btn primary" onclick="saveTemplateEditor()">Save Template</button>
+        ${t.id?`<button class="btn red" onclick="deleteTemplate('${t.id}')">Delete Template</button>`:''}
+      </div>`;
+    }
+    function templateItemsHTML(){ const t=window.editingTemplate; return t.exercises.map((it,i)=>{ const ex=getExercise(it); return `<div class="library-item"><div class="row"><div class="title-line"><span class="emoji">${ex.emoji}</span><strong>${escapeHtml(ex.name)}</strong></div><div><button class="btn small" onclick="moveTemplateExercise(${i},-1)">↑</button><button class="btn small" onclick="moveTemplateExercise(${i},1)">↓</button><button class="btn small red" onclick="removeTemplateExercise(${i})">×</button></div></div></div>`; }).join('') || `<div class="empty">No exercises yet.</div>`; }
+    function refreshTemplateEditor(){ $('#modal').innerHTML = templateEditorHTML(); }
+    function openTemplateAddExercise(){ $('#modal').innerHTML = `<div class="modal-header"><h2>Add from library</h2><button class="btn small" onclick="refreshTemplateEditor()">Back</button></div>${data.exercises.map(e=>`<div class="library-item"><div class="row"><div class="title-line"><span class="emoji">${e.emoji}</span><div><strong>${escapeHtml(e.name)}</strong><div class="tiny">${escapeHtml(e.group)} · ${escapeHtml(e.setup)}</div></div></div><button class="btn primary small" onclick="addLibraryToEditingTemplate('${e.id}')">Add</button></div></div>`).join('')}`; }
+    function addLibraryToEditingTemplate(exId){ window.editingTemplate.exercises.push({exerciseId:exId, custom:false, done:false, notes:data.exercises.find(e=>e.id===exId)?.notes||''}); refreshTemplateEditor(); }
+    function addCustomToTemplate(){ const name=prompt('Custom exercise name:'); if(!name)return; window.editingTemplate.exercises.push({custom:true, name, emoji:'🏋️', type:'strength', setup:'', sets:3, reps:'12-15', notes:''}); refreshTemplateEditor(); }
+    function moveTemplateExercise(i,dir){ const arr=window.editingTemplate.exercises, j=i+dir; if(j<0||j>=arr.length)return; [arr[i],arr[j]]=[arr[j],arr[i]]; refreshTemplateEditor(); }
+    function removeTemplateExercise(i){ window.editingTemplate.exercises.splice(i,1); refreshTemplateEditor(); }
+    function saveTemplateEditor(){ const t=window.editingTemplate; t.name=$('#tplName')?.value || t.name; t.emoji=$('#tplEmoji')?.value || t.emoji; if(!t.name.trim()) return alert('Template needs a name.'); if(t.id){ Object.assign(data.templates.find(x=>x.id===t.id), t); } else { t.id=uid(); data.templates.push(t); } closeModal(); save(); }
+    function deleteTemplate(id){ if(confirm('Delete this template?')) { data.templates=data.templates.filter(t=>t.id!==id); closeModal(); save(); } }
+
+    function exportJSON(){ const blob=new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`mak-lifts-backup-${todayISO()}.json`; a.click(); URL.revokeObjectURL(a.href); }
+    function importJSONPrompt(){
+      openModal(`<div class="modal-header"><h2>Import JSON</h2><button class="btn small" onclick="closeModal()">Close</button></div><p class="muted">Paste a Mak Lifts JSON backup below. This replaces current app data.</p><textarea id="importText" style="min-height:240px"></textarea><button class="btn primary" onclick="importJSON()">Import Backup</button>`);
+    }
+    function importJSON(){ try { const parsed=JSON.parse($('#importText').value); if(!parsed.exercises || !parsed.templates) throw new Error('Invalid backup'); data=parsed; closeModal(); save(); } catch(e){ alert('That does not look like a valid Mak Lifts backup.'); } }
+
+    window.addEventListener('beforeinstallprompt', e => { window.deferredPrompt = e; });
+    render();
+  </script>
+</body>
+</html>
