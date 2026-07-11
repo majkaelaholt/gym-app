@@ -140,8 +140,21 @@
     .pill.green { background: #e3f0dc; color: #38673d; }
     .pill.yellow { background: #faedcc; color: #74510d; }
     .source-badge { display:inline-flex; align-items:center; border-radius:999px; padding:3px 8px; font-size:.68rem; font-weight:900; letter-spacing:.01em; white-space:nowrap; }
-    .source-badge.mak { background:#efe1cc; color:#684b2b; }
     .source-badge.coach { background:#eadff0; color:#61456d; }
+    .template-toolbar { display:grid; gap:8px; margin:10px 0 12px; }
+    .template-search { margin:0; }
+    .template-filters { display:flex; gap:6px; flex-wrap:wrap; }
+    .template-filters .chip { min-height:32px; padding:6px 9px; font-size:.74rem; }
+    .template-card.favorite { border-color:#d7b96d; box-shadow:0 0 0 2px rgba(214,170,76,.12); }
+    .template-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+    .template-meta { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+    .template-actions { display:grid; grid-template-columns:1fr 1fr auto; gap:7px; margin-top:10px; }
+    .favorite-btn { width:38px; padding:0; font-size:1.05rem; }
+    .tag-pill { display:inline-flex; align-items:center; border-radius:999px; padding:4px 7px; background:#f3eadc; color:#6f6251; font-size:.7rem; font-weight:800; }
+    .tag-pill.hard { background:#f8dfdb; color:#8b4e48; }
+    .tag-pill.easy { background:#e4efdf; color:#48704d; }
+    .template-preview { margin-top:8px; line-height:1.35; }
+    .template-section-title { margin:12px 0 4px; font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:900; }
 
     .exercise-details { display:none; margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 12px; }
     .exercise-card.open .exercise-details { display:block; }
@@ -233,6 +246,10 @@
       input, textarea, select { padding:8px 10px; min-height:39px; border-radius:12px; }
       textarea { min-height:70px; }
       .grid2 { gap:7px; }
+      .template-actions { grid-template-columns:1fr 1fr 38px; gap:6px; }
+      .template-actions .btn { min-height:36px; padding:6px 8px; font-size:.74rem; }
+      .template-card-top .title-line strong { white-space:normal; }
+      .template-preview { font-size:.78rem; }
     }
 
     @media (min-width: 700px) {
@@ -379,13 +396,38 @@
           exercises: spec.names.map(n => exByName(n, state.exercises)).filter(Boolean)
         });
       });
-      state.version = Math.max(Number(state.version || 1), 2);
-      return state;
+      state.version = Math.max(Number(state.version || 1), 3);
+      return migrateTemplateMetadata(state);
     }
 
     function templateSourceBadge(t) {
-      const isCoach = t.source === 'Coach Pick';
-      return `<span class="source-badge ${isCoach?'coach':'mak'}">${isCoach?'✨ Added for Mak':'❤ From Mak'}</span>`;
+      return t.source === 'Coach Pick' ? `<span class="source-badge coach">✨ ChatGPT Loaded</span>` : '';
+    }
+
+    function templateDefaults(t) {
+      const coach = t.source === 'Coach Pick';
+      const name = (t.name || '').toLowerCase();
+      let duration = t.duration || Math.max(20, Math.round((t.exercises?.length || 0) * 7 / 5) * 5);
+      let difficulty = t.difficulty || (name.includes('recovery') || name.includes('cardio only') ? 'Easy' : name.includes('quick') ? 'Moderate' : 'Hard');
+      let tags = Array.isArray(t.tags) ? t.tags : [];
+      if (!tags.length) {
+        if (name.includes('quick')) tags.push('Quick');
+        if (name.includes('lower') || name.includes('legs') || name.includes('glute')) tags.push('Lower');
+        if (name.includes('upper') || name.includes('push')) tags.push('Upper');
+        if (name.includes('pull')) tags.push('Pull');
+        if (name.includes('arms')) tags.push('Arms');
+        if (name.includes('core')) tags.push('Core');
+        if (name.includes('cardio')) tags.push('Cardio');
+        if (name.includes('recovery')) tags.push('Recovery','Low Energy');
+        if (!tags.length) tags.push('Strength');
+      }
+      return {...t, duration, difficulty, tags:[...new Set(tags)], favorite:!!t.favorite, source: coach ? 'Coach Pick' : (t.source || 'Mak')};
+    }
+
+    function migrateTemplateMetadata(state) {
+      state.templates = (state.templates || []).map(templateDefaults);
+      state.templateFilters = state.templateFilters || {source:'All', duration:'All', tag:'All', search:''};
+      return state;
     }
 
     function makeDefaultData() {
@@ -399,7 +441,7 @@
         ...recommendedTemplateSpecs().map(spec => t(spec.name, spec.emoji, spec.names, 'Coach Pick', spec.seedKey))
       ];
       const slots = [1,2,3,4].map((n,i) => ({ id: uid(), label:`Workout ${n}`, templateId: templates[i]?.id || null, emoji: templates[i]?.emoji || '🏋️', name: templates[i]?.name.replace(' · Original','') || `Workout ${n}`, status:'planned', startedAt:null, finishedAt:null, exercises: cloneTemplateExercises(templates[i]) }));
-      return { version: 1, weeklyGoal: 4, weekStart: getWeekStart(), exercises, templates, slots, activeSlotId: null, logs: [], exerciseFilter: 'All', theme: 'cozy' };
+      return migrateTemplateMetadata({ version: 3, weeklyGoal: 4, weekStart: getWeekStart(), exercises, templates, slots, activeSlotId: null, logs: [], exerciseFilter: 'All', theme: 'cozy' });
     }
 
     function cloneTemplateExercises(template) {
@@ -687,7 +729,43 @@
     }
 
     function renderTemplates() {
-      $('#templates').innerHTML = `<div class="card"><div class="row"><h2>Templates</h2><button class="btn primary small" onclick="openTemplateEditor()">+ Template</button></div><p class="tiny" style="margin:4px 0 10px">❤ From Mak = your original/custom routines · ✨ Added for Mak = suggested routines</p>${data.templates.map(t=>`<div class="template-card"><div class="row"><div class="title-line"><span class="emoji">${t.emoji}</span><div><strong>${escapeHtml(t.name)}</strong><div class="tiny">${t.exercises.length} exercises</div></div></div><button class="btn small" onclick="openTemplateEditor('${t.id}')">Edit</button></div><div style="margin-top:7px">${templateSourceBadge(t)}</div><div class="muted" style="margin-top:8px">${t.exercises.slice(0,4).map(it=>escapeHtml(getExercise(it).name)).join(' · ')}${t.exercises.length>4?'…':''}</div></div>`).join('')}</div>`;
+      const f = data.templateFilters || {source:'All', duration:'All', tag:'All', search:''};
+      const allTags = [...new Set(data.templates.flatMap(t => templateDefaults(t).tags))].sort();
+      const filtered = data.templates.map(templateDefaults).filter(t => {
+        const sourceOk = f.source === 'All' || (f.source === 'ChatGPT' ? t.source === 'Coach Pick' : t.source !== 'Coach Pick');
+        const durationOk = f.duration === 'All' || (f.duration === 'Quick' ? t.duration <= 45 : f.duration === 'Standard' ? (t.duration > 45 && t.duration <= 70) : t.duration > 70);
+        const tagOk = f.tag === 'All' || t.tags.includes(f.tag);
+        const q = (f.search || '').trim().toLowerCase();
+        const searchOk = !q || t.name.toLowerCase().includes(q) || t.tags.join(' ').toLowerCase().includes(q);
+        return sourceOk && durationOk && tagOk && searchOk;
+      }).sort((a,b) => Number(b.favorite)-Number(a.favorite) || a.name.localeCompare(b.name));
+      $('#templates').innerHTML = `<div class="card"><div class="row"><h2>Templates</h2><button class="btn primary small" onclick="openTemplateEditor()">+ Template</button></div>
+        <div class="template-toolbar">
+          <input class="template-search" placeholder="Search templates" value="${escapeHtml(f.search||'')}" oninput="setTemplateFilter('search',this.value)">
+          <div class="template-filters"><button class="chip ${f.source==='All'?'active':''}" onclick="setTemplateFilter('source','All')">All</button><button class="chip ${f.source==='Mine'?'active':''}" onclick="setTemplateFilter('source','Mine')">My Templates</button><button class="chip ${f.source==='ChatGPT'?'active':''}" onclick="setTemplateFilter('source','ChatGPT')">✨ ChatGPT</button></div>
+          <div class="template-filters"><button class="chip ${f.duration==='All'?'active':''}" onclick="setTemplateFilter('duration','All')">Any Length</button><button class="chip ${f.duration==='Quick'?'active':''}" onclick="setTemplateFilter('duration','Quick')">≤45 min</button><button class="chip ${f.duration==='Standard'?'active':''}" onclick="setTemplateFilter('duration','Standard')">46–70 min</button><button class="chip ${f.duration==='Long'?'active':''}" onclick="setTemplateFilter('duration','Long')">71+ min</button></div>
+          <div class="chip-row"><button class="chip ${f.tag==='All'?'active':''}" onclick="setTemplateFilter('tag','All')">All Types</button>${allTags.map(tag=>`<button class="chip ${f.tag===tag?'active':''}" onclick="setTemplateFilter('tag','${escapeHtml(tag)}')">${escapeHtml(tag)}</button>`).join('')}</div>
+        </div>
+        ${filtered.map(renderTemplateCard).join('') || `<div class="empty">No templates match those filters.</div>`}
+      </div>`;
+    }
+
+    function renderTemplateCard(raw) {
+      const t = templateDefaults(raw);
+      const preview = t.exercises.slice(0,4).map(it=>escapeHtml(getExercise(it).name)).join(' · ');
+      return `<div class="template-card ${t.favorite?'favorite':''}">
+        <div class="template-card-top"><div class="title-line"><span class="emoji">${t.emoji}</span><div><strong>${escapeHtml(t.name)}</strong><div class="tiny">${t.exercises.length} exercises${templateSourceBadge(t) ? ` · ${templateSourceBadge(t)}` : ''}</div></div></div></div>
+        <div class="template-meta"><span class="tag-pill">⏱ ${t.duration} min</span><span class="tag-pill ${t.difficulty==='Hard'?'hard':t.difficulty==='Easy'?'easy':''}">${t.difficulty==='Easy'?'🌿':t.difficulty==='Hard'?'💪':'⚖️'} ${escapeHtml(t.difficulty)}</span>${t.tags.map(tag=>`<span class="tag-pill">${escapeHtml(tag)}</span>`).join('')}</div>
+        <div class="muted template-preview">${preview}${t.exercises.length>4?'…':''}</div>
+        <div class="template-actions"><button class="btn primary small" onclick="useTemplate('${t.id}')">Use</button><button class="btn small" onclick="openTemplateEditor('${t.id}')">Edit</button><button class="btn small favorite-btn" aria-label="Favorite" onclick="toggleTemplateFavorite('${t.id}')">${t.favorite?'★':'☆'}</button></div>
+      </div>`;
+    }
+
+    function setTemplateFilter(key,value){ data.templateFilters = data.templateFilters || {}; data.templateFilters[key]=value; persist(); renderTemplates(); }
+    function toggleTemplateFavorite(id){ const t=data.templates.find(t=>t.id===id); t.favorite=!t.favorite; save(); }
+    function useTemplate(templateId){
+      const t=data.templates.find(t=>t.id===templateId);
+      openModal(`<div class="modal-header"><h2>Use ${escapeHtml(t.name)}</h2><button class="btn small" onclick="closeModal()">Close</button></div><p class="muted">Choose which workout slot to replace.</p>${data.slots.map(s=>`<div class="slot-card"><div class="row"><div class="title-line"><span class="emoji">${s.emoji}</span><div><strong>${escapeHtml(s.label)}</strong><div class="tiny">${escapeHtml(s.name)}</div></div></div><button class="btn primary small" onclick="loadTemplateToSlot('${s.id}','${t.id}')">Load Here</button></div></div>`).join('')}`);
     }
 
     function renderExercises() {
@@ -816,10 +894,10 @@
     });
 
     function openLoadTemplate(slotId){
-      openModal(`<div class="modal-header"><h2>Load template</h2><button class="btn small" onclick="closeModal()">Close</button></div>${data.templates.map(t=>`<div class="template-card"><div class="row"><div class="title-line"><span class="emoji">${t.emoji}</span><div><strong>${escapeHtml(t.name)}</strong><div style="margin-top:4px">${templateSourceBadge(t)}</div></div></div><button class="btn primary small" onclick="loadTemplateToSlot('${slotId}','${t.id}')">Load</button></div></div>`).join('')}`);
+      openModal(`<div class="modal-header"><h2>Load template</h2><button class="btn small" onclick="closeModal()">Close</button></div>${data.templates.map(raw=>{const t=templateDefaults(raw);return `<div class="template-card"><div class="row"><div class="title-line"><span class="emoji">${t.emoji}</span><div><strong>${escapeHtml(t.name)}</strong><div class="tiny">${t.duration} min · ${escapeHtml(t.difficulty)} ${templateSourceBadge(t)?'· '+templateSourceBadge(t):''}</div></div></div><button class="btn primary small" onclick="loadTemplateToSlot('${slotId}','${t.id}')">Load</button></div></div>`}).join('')}`);
     }
     function loadTemplateToSlot(slotId, templateId){ const slot=data.slots.find(s=>s.id===slotId); const t=data.templates.find(t=>t.id===templateId); slot.templateId=t.id; slot.emoji=t.emoji; slot.name=t.name.replace(' · Original',''); slot.exercises=cloneTemplateExercises(t); closeModal(); save(); }
-    function saveSlotAsTemplate(slotId){ const s=data.slots.find(s=>s.id===slotId); const name=prompt('Template name:', s.name); if(!name)return; data.templates.push({id:uid(), name, emoji:s.emoji, source:'Mak', exercises:s.exercises.map(({instanceId,done,open,setLogs,cardioLog,...rest})=>rest)}); save(); }
+    function saveSlotAsTemplate(slotId){ const s=data.slots.find(s=>s.id===slotId); const name=prompt('Template name:', s.name); if(!name)return; data.templates.push(templateDefaults({id:uid(), name, emoji:s.emoji, source:'Mak', exercises:s.exercises.map(({instanceId,done,open,setLogs,cardioLog,...rest})=>rest)})); save(); }
 
     function openAddExerciseToSlot(slotId){
       openModal(`<div class="modal-header"><h2>Add exercise</h2><button class="btn small" onclick="closeModal()">Close</button></div><div class="chip-row wrap">${groups.map(([g,e])=>`<button class="chip" onclick="filterModalExercises('${slotId}','${escapeHtml(g)}')">${e} ${escapeHtml(g)}</button>`).join('')}</div><div id="modalExerciseList">${modalExerciseList(slotId, 'All')}</div><button class="btn" onclick="openCustomForSlot('${slotId}')">+ Custom exercise</button>`);
@@ -853,7 +931,7 @@
     function deleteExercise(id){ if(confirm('Delete this exercise from library? Existing template references may show as deleted.')) { data.exercises=data.exercises.filter(e=>e.id!==id); closeModal(); save(); } }
 
     function openTemplateEditor(id){
-      const t = id ? data.templates.find(x=>x.id===id) : {id:'', name:'', emoji:'📋', source:'Mak', exercises:[]};
+      const t = templateDefaults(id ? data.templates.find(x=>x.id===id) : {id:'', name:'', emoji:'📋', source:'Mak', exercises:[], duration:45, difficulty:'Moderate', tags:['Strength'], favorite:false});
       window.editingTemplate = structuredClone(t);
       openModal(templateEditorHTML());
     }
@@ -861,6 +939,9 @@
       const t=window.editingTemplate;
       return `<div class="modal-header"><h2>${t.id?'Edit':'Add'} template</h2><button class="btn small" onclick="closeModal()">Close</button></div><div class="stack">
         <div class="grid2"><div><label>Emoji</label><input id="tplEmoji" value="${escapeHtml(t.emoji)}" oninput="window.editingTemplate.emoji=this.value"></div><div><label>Name</label><input id="tplName" value="${escapeHtml(t.name)}" oninput="window.editingTemplate.name=this.value"></div></div>
+        <div class="grid2"><div><label>Estimated minutes</label><input id="tplDuration" inputmode="numeric" value="${escapeHtml(t.duration || 45)}"></div><div><label>Difficulty</label><select id="tplDifficulty"><option ${t.difficulty==='Easy'?'selected':''}>Easy</option><option ${t.difficulty==='Moderate'?'selected':''}>Moderate</option><option ${t.difficulty==='Hard'?'selected':''}>Hard</option></select></div></div>
+        <div><label>Tags (comma separated)</label><input id="tplTags" value="${escapeHtml((t.tags||[]).join(', '))}" placeholder="Strength, Quick, Low Energy"></div>
+        <label style="display:flex;align-items:center;gap:8px;color:var(--text)"><input id="tplFavorite" type="checkbox" style="width:auto;min-height:auto" ${t.favorite?'checked':''}> Favorite / pin this template</label>
         <h3>Exercises</h3>
         <div id="tplItems">${templateItemsHTML()}</div>
         <button class="btn" onclick="openTemplateAddExercise()">+ Add from Library</button>
@@ -876,7 +957,7 @@
     function addCustomToTemplate(){ const name=prompt('Custom exercise name:'); if(!name)return; window.editingTemplate.exercises.push({custom:true, name, emoji:'🏋️', type:'strength', setup:'', sets:3, reps:'12-15', notes:''}); refreshTemplateEditor(); }
     function moveTemplateExercise(i,dir){ const arr=window.editingTemplate.exercises, j=i+dir; if(j<0||j>=arr.length)return; [arr[i],arr[j]]=[arr[j],arr[i]]; refreshTemplateEditor(); }
     function removeTemplateExercise(i){ window.editingTemplate.exercises.splice(i,1); refreshTemplateEditor(); }
-    function saveTemplateEditor(){ const t=window.editingTemplate; t.name=$('#tplName')?.value || t.name; t.emoji=$('#tplEmoji')?.value || t.emoji; if(!t.name.trim()) return alert('Template needs a name.'); if(t.id){ Object.assign(data.templates.find(x=>x.id===t.id), t); } else { t.id=uid(); data.templates.push(t); } closeModal(); save(); }
+    function saveTemplateEditor(){ const t=window.editingTemplate; t.name=$('#tplName')?.value || t.name; t.emoji=$('#tplEmoji')?.value || t.emoji; t.duration=Math.max(1,Number($('#tplDuration')?.value)||45); t.difficulty=$('#tplDifficulty')?.value||'Moderate'; t.tags=($('#tplTags')?.value||'').split(',').map(x=>x.trim()).filter(Boolean); t.favorite=!!$('#tplFavorite')?.checked; if(!t.name.trim()) return alert('Template needs a name.'); if(t.id){ Object.assign(data.templates.find(x=>x.id===t.id), t); } else { t.id=uid(); t.source='Mak'; data.templates.push(t); } closeModal(); save(); }
     function deleteTemplate(id){ if(confirm('Delete this template?')) { data.templates=data.templates.filter(t=>t.id!==id); closeModal(); save(); } }
 
     function exportJSON(){ const blob=new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`mak-lifts-backup-${todayISO()}.json`; a.click(); URL.revokeObjectURL(a.href); }
