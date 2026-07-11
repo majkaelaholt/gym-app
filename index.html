@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#8b6f47" />
   <title>Mak Lifts</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Mak Lifts" />
   <style>
     :root {
       --bg: #f8f3ea;
@@ -159,6 +166,71 @@
       box-shadow: 0 10px 30px rgba(0,0,0,.22);
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+
+    /* Compact phone layout */
+    .slot-actions { display:grid; grid-template-columns:1.1fr 1.45fr 42px 42px; gap:7px; }
+    .slot-actions .btn { width:100%; min-width:0; }
+    .slot-actions .btn:nth-child(5) { grid-column:1 / 3; }
+    .slot-actions .btn:nth-child(6) { grid-column:3 / 5; }
+
+    @media (max-width: 520px) {
+      :root { --radius: 15px; --tap: 40px; }
+      body { padding-bottom: 76px; }
+      header { padding: calc(8px + env(safe-area-inset-top)) 12px 8px; }
+      h1 { font-size: 1.18rem; }
+      .sub { display:none; }
+      .badge { padding:6px 9px; font-size:.8rem; }
+      main { padding:10px; }
+      .card { padding:11px; margin-bottom:9px; box-shadow:0 4px 14px rgba(65,44,23,.07); }
+      h2 { font-size:1rem; margin-bottom:7px; }
+      .muted { font-size:.82rem; }
+      .tiny { font-size:.72rem; }
+      .emoji { font-size:1.3rem; }
+
+      nav { padding:5px 4px calc(5px + env(safe-area-inset-bottom)); gap:1px; }
+      .nav-btn { min-height:48px; border-radius:12px; font-size:.58rem; gap:1px; padding:2px 0; }
+      .nav-btn span:first-child { font-size:1rem; }
+
+      .week-card .progressbar { margin-top:8px !important; height:9px; }
+      .week-card .btn { min-height:34px; }
+
+      .today-workout-chips {
+        display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+        overflow:visible; gap:7px; padding-bottom:8px;
+      }
+      .today-workout-chips .chip {
+        width:100%; min-width:0; padding:7px 8px; min-height:36px;
+        overflow:hidden; text-overflow:ellipsis; font-size:.82rem;
+      }
+      .today-picker-card .empty { padding:14px 10px; font-size:.86rem; }
+
+      .plan-card { padding:10px; }
+      .plan-intro { margin:0 0 7px; line-height:1.3; }
+      .slot-card, .exercise-card, .template-card, .library-item {
+        border-radius:14px; padding:10px; margin:7px 0;
+      }
+      .slot-card > .row:first-child { align-items:flex-start; }
+      .slot-card .pill { font-size:.69rem; padding:3px 7px; }
+      .title-line { gap:7px; }
+      .slot-actions { grid-template-columns:1fr 1.35fr 38px 38px; gap:6px; margin-top:8px !important; }
+      .slot-actions .btn { padding:6px 7px; min-height:36px; font-size:.72rem; border-radius:11px; }
+      .slot-actions .btn:nth-child(5) { grid-column:1 / 3; }
+      .slot-actions .btn:nth-child(6) { grid-column:3 / 5; }
+
+      .exercise-card .row.wrap { gap:6px; }
+      .exercise-card .btn.small { flex:1; padding:6px 7px; font-size:.72rem; }
+      .exercise-card .muted[style] { margin-top:5px !important; }
+      .exercise-details { margin-top:9px; padding-top:9px; }
+      .set-row { grid-template-columns:48px 1fr; gap:6px; }
+      .set-row input:last-child { grid-column:2; }
+
+      .chip-row.wrap { gap:6px; }
+      .chip-row.wrap .chip { padding:7px 9px; min-height:34px; font-size:.76rem; }
+      input, textarea, select { padding:8px 10px; min-height:39px; border-radius:12px; }
+      textarea { min-height:70px; }
+      .grid2 { gap:7px; }
+    }
 
     @media (min-width: 700px) {
       nav { max-width: 680px; left: 50%; transform: translateX(-50%); border-radius: 24px 24px 0 0; border-left:1px solid var(--border); border-right:1px solid var(--border); }
@@ -455,7 +527,7 @@
       const el = $('#today');
       const active = activeSlot();
       el.innerHTML = `
-        <div class="card">
+        <div class="card week-card">
           <div class="row">
             <div>
               <h2>This week</h2>
@@ -465,9 +537,9 @@
           </div>
           <div class="progressbar" style="margin-top:12px"><div style="width:${Math.min(100, completedCount()/data.weeklyGoal*100)}%"></div></div>
         </div>
-        <div class="card">
+        <div class="card today-picker-card">
           <h2>Choose today\'s workout</h2>
-          <div class="chip-row">${data.slots.map(s => `<button class="chip ${active?.id===s.id?'active':''}" onclick="chooseToday('${s.id}', event)">${s.emoji} ${escapeHtml(s.label)}${s.status==='done'?' ✓':''}</button>`).join('')}</div>
+          <div class="chip-row today-workout-chips">${data.slots.map(s => `<button class="chip ${active?.id===s.id?'active':''}" onclick="chooseToday('${s.id}', event)">${s.emoji} ${escapeHtml(s.label)}${s.status==='done'?' ✓':''}</button>`).join('')}</div>
           ${active ? renderWorkoutBlock(active) : `<div class="empty">Pick a workout slot to start. No dropdown goblins here.</div>`}
         </div>`;
     }
@@ -535,12 +607,12 @@
     }
 
     function renderPlan() {
-      $('#plan').innerHTML = `<div class="card"><h2>Flexible 4-day plan</h2><p class="muted">Load templates, swap order, or skip whatever day life/Ty\'s work schedule messes with.</p>${data.slots.map((s,i)=>renderSlot(s,i)).join('')}</div>`;
+      $('#plan').innerHTML = `<div class="card plan-card"><h2>Flexible 4-day plan</h2><p class="muted plan-intro">Load templates, swap order, or skip whatever day life/Ty\'s work schedule messes with.</p>${data.slots.map((s,i)=>renderSlot(s,i)).join('')}</div>`;
     }
     function renderSlot(s, i) {
       return `<div class="slot-card ${s.status==='done'?'done':''}">
         <div class="row"><div class="title-line"><span class="emoji">${s.emoji}</span><div><strong>${escapeHtml(s.label)}</strong><div class="tiny">${escapeHtml(s.name)} · ${s.status}</div></div></div><span class="pill">${s.exercises.length} moves</span></div>
-        <div class="row wrap" style="margin-top:10px">
+        <div class="row wrap slot-actions" style="margin-top:10px">
           <button class="btn small primary" onclick="chooseToday('${s.id}', event);setTab('today')">Use Today</button>
           <button class="btn small" onclick="openLoadTemplate('${s.id}')">Load Template</button>
           <button class="btn small" onclick="moveSlot(${i},-1)">↑</button>
