@@ -139,6 +139,9 @@
     .pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 8px; background: var(--card2); color: var(--muted); font-size: .76rem; font-weight: 800; }
     .pill.green { background: #e3f0dc; color: #38673d; }
     .pill.yellow { background: #faedcc; color: #74510d; }
+    .source-badge { display:inline-flex; align-items:center; border-radius:999px; padding:3px 8px; font-size:.68rem; font-weight:900; letter-spacing:.01em; white-space:nowrap; }
+    .source-badge.mak { background:#efe1cc; color:#684b2b; }
+    .source-badge.coach { background:#eadff0; color:#61456d; }
 
     .exercise-details { display:none; margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 12px; }
     .exercise-card.open .exercise-details { display:block; }
@@ -292,14 +295,14 @@
     const groupEmoji = Object.fromEntries(groups);
 
     const seedExercises = [
-      ['Plate loaded leg press','Quads','strength','45lbs + 45lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual','Shared / alternate sets with Ty if needed.'],
-      ['Hip thrusts','Glutes','strength','25lbs + 10lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual','If hip thrust machine is taken, do RDL first.'],
-      ['Smith RDL','Hamstrings','strength','30lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual','Posterior chain focus.'],
+      ['Plate loaded leg press','Quads','strength','45lbs + 45lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual',''],
+      ['Hip thrusts','Glutes','strength','25lbs + 10lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual',''],
+      ['Smith RDL','Hamstrings','strength','30lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual',''],
       ['DB Bulgarian split squat','Glutes','strength','No weight',3,'12-15','Increase reps first, then add dumbbells','manual',''],
       ['Machine calf extension','Calves','strength','100lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
       ['Leg extension','Quads','strength','70lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
       ['Leg curl','Hamstrings','strength','70lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
-      ['Hip abductor','Glutes','strength','100lbs',3,'12-15','Increase after 15 reps all sets with good form','10','While Ty benches, I can do this.'],
+      ['Hip abductor','Glutes','strength','100lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
       ['Hip adductor','Glutes','strength','100lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
       ['Elevated knee crunch','Core','strength','Level 6',3,'12-15','Increase after 15 reps all sets with good form','manual',''],
       ['Ab crunch','Core','strength','40lbs',3,'15-20','Increase after 20 reps all sets with good form','10',''],
@@ -313,12 +316,19 @@
       ['Machine preacher curl','Biceps','strength','45lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
       ['DB wrist curl & reverse wrist curl','Forearms','strength','10lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
       ['Stair stepper','Cardio','cardio','Level 4',0,'','Log time/level/distance','',''],
-      ['Smith machine/benching','Chest','strength','20lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual','While Ty benches, use backup movement if needed.'],
+      ['Smith machine/benching','Chest','strength','20lbs each side',3,'12-15','Increase after 15 reps all sets with good form','manual',''],
       ['Pec dec','Chest','strength','70lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
       ['Shoulder press','Shoulders','strength','60lbs',3,'12-15','Increase after 15 reps all sets with good form','10',''],
       ['Cable lat raises','Shoulders','strength','15lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
       ['Single arm cable pushdowns','Triceps','strength','35lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
-      ['Straight bar overhead extensions','Triceps','strength','30lbs',3,'12-15','Increase after 15 reps all sets with good form','5','']
+      ['Straight bar overhead extensions','Triceps','strength','30lbs',3,'12-15','Increase after 15 reps all sets with good form','5',''],
+      ['Cable kickback','Glutes','strength','',3,'12-15','Increase after 15 reps all sets with good form','5',''],
+      ['Plank','Core','strength','Bodyweight',3,'30-60 sec','Increase time with good form','manual',''],
+      ['Cable crunch','Core','strength','',3,'12-15','Increase after 15 reps all sets with good form','5',''],
+      ['Walking','Cardio','cardio','Easy pace',0,'','Log time/distance','',''],
+      ['Stretching','Mobility / Other','cardio','Gentle full-body',0,'','Log time/notes','',''],
+      ['Mobility','Mobility / Other','cardio','Full-body mobility',0,'','Log time/notes','',''],
+      ['Foam rolling','Mobility / Other','cardio','Recovery',0,'','Log time/notes','','']
     ].map(([name, group, type, setup, sets, reps, rule, addAmount, notes]) => ({ id: uid(), name, group, emoji: groupEmoji[group] || '🏋️', type, setup, sets, reps, rule, addAmount, notes }));
 
     function exByName(name, exercises) {
@@ -326,14 +336,67 @@
       return ex ? { exerciseId: ex.id, custom: false, done: false, notes: ex.notes || '' } : null;
     }
 
+    function recommendedTemplateSpecs() {
+      return [
+        {seedKey:'coach-lower-a', name:'Lower A · Strength', emoji:'🍑', names:['Plate loaded leg press','Hip thrusts','Smith RDL','DB Bulgarian split squat','Leg extension','Leg curl','Machine calf extension','Ab crunch','Incline walk']},
+        {seedKey:'coach-lower-b', name:'Lower B · Glute Focus', emoji:'🍑', names:['Hip thrusts','Smith RDL','Cable kickback','Hip abductor','Leg curl','DB Bulgarian split squat','Machine calf extension','Stair stepper']},
+        {seedKey:'coach-push-upper', name:'Push / Upper', emoji:'🧲', names:['Smith machine/benching','Pec dec','Shoulder press','Cable lat raises','Single arm cable pushdowns','Straight bar overhead extensions','Incline walk']},
+        {seedKey:'coach-arms', name:'Arms Day', emoji:'💪', names:['Bayesian curl','Machine preacher curl','Rope hammer curl','Single arm cable pushdowns','Straight bar overhead extensions','DB wrist curl & reverse wrist curl']},
+        {seedKey:'coach-core-cardio', name:'Core + Cardio', emoji:'🔥', names:['Ab crunch','Elevated knee crunch','Plank','Cable crunch','Incline walk','Stair stepper']},
+        {seedKey:'coach-quick-lower', name:'Quick Lower · 45 Min', emoji:'⚡', names:['Plate loaded leg press','Hip thrusts','Leg curl','Hip abductor','Machine calf extension']},
+        {seedKey:'coach-quick-upper', name:'Quick Upper', emoji:'⚡', names:['Smith machine/benching','Lat pulldown','Seated cable rows','Shoulder press','Bayesian curl','Single arm cable pushdowns']},
+        {seedKey:'coach-full-body', name:'Full Body', emoji:'🏋️', names:['Plate loaded leg press','Smith machine/benching','Lat pulldown','Shoulder press','Hip thrusts','Bayesian curl','Single arm cable pushdowns','Ab crunch']},
+        {seedKey:'coach-cardio-only', name:'Cardio Only', emoji:'🫀', names:['Incline walk','Stair stepper']},
+        {seedKey:'coach-recovery', name:'Recovery', emoji:'🧘', names:['Walking','Stretching','Mobility','Foam rolling']}
+      ];
+    }
+
+    function ensureStarterContent(state) {
+      if (!state || !Array.isArray(state.exercises) || !Array.isArray(state.templates)) return state;
+      const fresh = makeDefaultData();
+      // Add only missing newer library exercises; never overwrite Mak's edits.
+      fresh.exercises.forEach(ex => {
+        if (!state.exercises.some(existing => existing.name === ex.name)) state.exercises.push(ex);
+      });
+      const makNames = new Set(['Legs Day · Original','Pull Day · Original','Upper Day · Original','Glutes / Lower Day']);
+      state.templates.forEach(tpl => {
+        if (!tpl.source) tpl.source = makNames.has(tpl.name) ? 'Mak' : 'Mak';
+      });
+      // Give the original four stable labels, even on older saved data.
+      const makKeys = {
+        'Legs Day · Original':'mak-legs-original',
+        'Pull Day · Original':'mak-pull-original',
+        'Upper Day · Original':'mak-upper-original',
+        'Glutes / Lower Day':'mak-glutes-lower'
+      };
+      state.templates.forEach(tpl => {
+        if (makKeys[tpl.name]) { tpl.source='Mak'; tpl.seedKey=tpl.seedKey || makKeys[tpl.name]; }
+      });
+      recommendedTemplateSpecs().forEach(spec => {
+        if (state.templates.some(t => t.seedKey === spec.seedKey || t.name === spec.name)) return;
+        state.templates.push({
+          id: uid(), name: spec.name, emoji: spec.emoji, source:'Coach Pick', seedKey:spec.seedKey,
+          exercises: spec.names.map(n => exByName(n, state.exercises)).filter(Boolean)
+        });
+      });
+      state.version = Math.max(Number(state.version || 1), 2);
+      return state;
+    }
+
+    function templateSourceBadge(t) {
+      const isCoach = t.source === 'Coach Pick';
+      return `<span class="source-badge ${isCoach?'coach':'mak'}">${isCoach?'✨ Added for Mak':'❤ From Mak'}</span>`;
+    }
+
     function makeDefaultData() {
       const exercises = structuredClone(seedExercises);
-      const t = (name, emoji, names) => ({ id: uid(), name, emoji, exercises: names.map(n => exByName(n, exercises)).filter(Boolean) });
+      const t = (name, emoji, names, source='Mak', seedKey='') => ({ id: uid(), name, emoji, source, seedKey, exercises: names.map(n => exByName(n, exercises)).filter(Boolean) });
       const templates = [
-        t('Legs Day · Original','🦵',['Plate loaded leg press','Hip thrusts','Smith RDL','DB Bulgarian split squat','Machine calf extension','Leg extension','Leg curl','Hip abductor','Hip adductor','Elevated knee crunch','Ab crunch','Incline walk']),
-        t('Pull Day · Original','🪽',['Lat pulldown','Seated cable rows','Makeshift T-bar row','Cable pullover','Bayesian curl','Rope hammer curl','Machine preacher curl','DB wrist curl & reverse wrist curl','Stair stepper']),
-        t('Upper Day · Original','🧲',['Smith machine/benching','Lat pulldown','Seated cable rows','Cable pullover','Pec dec','Shoulder press','Cable lat raises','Single arm cable pushdowns','Straight bar overhead extensions','Bayesian curl','Machine preacher curl','Stair stepper']),
-        t('Glutes / Lower Day','🍑',['Hip thrusts','Smith RDL','DB Bulgarian split squat','Hip abductor','Leg curl','Machine calf extension','Incline walk'])
+        t('Legs Day · Original','🦵',['Plate loaded leg press','Hip thrusts','Smith RDL','DB Bulgarian split squat','Machine calf extension','Leg extension','Leg curl','Hip abductor','Hip adductor','Elevated knee crunch','Ab crunch','Incline walk'],'Mak','mak-legs-original'),
+        t('Pull Day · Original','🪽',['Lat pulldown','Seated cable rows','Makeshift T-bar row','Cable pullover','Bayesian curl','Rope hammer curl','Machine preacher curl','DB wrist curl & reverse wrist curl','Stair stepper'],'Mak','mak-pull-original'),
+        t('Upper Day · Original','🧲',['Smith machine/benching','Lat pulldown','Seated cable rows','Cable pullover','Pec dec','Shoulder press','Cable lat raises','Single arm cable pushdowns','Straight bar overhead extensions','Bayesian curl','Machine preacher curl','Stair stepper'],'Mak','mak-upper-original'),
+        t('Glutes / Lower Day','🍑',['Hip thrusts','Smith RDL','DB Bulgarian split squat','Hip abductor','Leg curl','Machine calf extension','Incline walk'],'Mak','mak-glutes-lower'),
+        ...recommendedTemplateSpecs().map(spec => t(spec.name, spec.emoji, spec.names, 'Coach Pick', spec.seedKey))
       ];
       const slots = [1,2,3,4].map((n,i) => ({ id: uid(), label:`Workout ${n}`, templateId: templates[i]?.id || null, emoji: templates[i]?.emoji || '🏋️', name: templates[i]?.name.replace(' · Original','') || `Workout ${n}`, status:'planned', startedAt:null, finishedAt:null, exercises: cloneTemplateExercises(templates[i]) }));
       return { version: 1, weeklyGoal: 4, weekStart: getWeekStart(), exercises, templates, slots, activeSlotId: null, logs: [], exerciseFilter: 'All', theme: 'cozy' };
@@ -363,7 +426,7 @@
           parsed.slots = parsed.slots.map(s => ({...s, status:'planned', startedAt:null, finishedAt:null, exercises:s.exercises.map(e=>({...e, done:false, setLogs:[], cardioLog:null}))}));
           parsed.activeSlotId = null;
         }
-        return parsed;
+        return ensureStarterContent(parsed);
       } catch { return makeDefaultData(); }
     }
     function persist() {
@@ -449,7 +512,7 @@
           alert('No cloud backup exists yet. Use “Push this device to cloud” first.');
           return;
         }
-        data = row.data;
+        data = ensureStarterContent(row.data);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         render();
         setCloudStatus(`Loaded cloud copy from ${new Date(row.updated_at).toLocaleString()}`);
@@ -475,7 +538,7 @@
         const cloudTime = Number(row.data.updatedAt || new Date(row.updated_at).getTime() || 0);
         const localTime = Number(data.updatedAt || 0);
         if (cloudTime > localTime) {
-          data = row.data;
+          data = ensureStarterContent(row.data);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
           render();
           setCloudStatus('Cloud copy loaded');
@@ -624,7 +687,7 @@
     }
 
     function renderTemplates() {
-      $('#templates').innerHTML = `<div class="card"><div class="row"><h2>Templates</h2><button class="btn primary small" onclick="openTemplateEditor()">+ Template</button></div>${data.templates.map(t=>`<div class="template-card"><div class="row"><div class="title-line"><span class="emoji">${t.emoji}</span><div><strong>${escapeHtml(t.name)}</strong><div class="tiny">${t.exercises.length} exercises</div></div></div><button class="btn small" onclick="openTemplateEditor('${t.id}')">Edit</button></div><div class="muted" style="margin-top:8px">${t.exercises.slice(0,4).map(it=>escapeHtml(getExercise(it).name)).join(' · ')}${t.exercises.length>4?'…':''}</div></div>`).join('')}</div>`;
+      $('#templates').innerHTML = `<div class="card"><div class="row"><h2>Templates</h2><button class="btn primary small" onclick="openTemplateEditor()">+ Template</button></div><p class="tiny" style="margin:4px 0 10px">❤ From Mak = your original/custom routines · ✨ Added for Mak = suggested routines</p>${data.templates.map(t=>`<div class="template-card"><div class="row"><div class="title-line"><span class="emoji">${t.emoji}</span><div><strong>${escapeHtml(t.name)}</strong><div class="tiny">${t.exercises.length} exercises</div></div></div><button class="btn small" onclick="openTemplateEditor('${t.id}')">Edit</button></div><div style="margin-top:7px">${templateSourceBadge(t)}</div><div class="muted" style="margin-top:8px">${t.exercises.slice(0,4).map(it=>escapeHtml(getExercise(it).name)).join(' · ')}${t.exercises.length>4?'…':''}</div></div>`).join('')}</div>`;
     }
 
     function renderExercises() {
@@ -753,10 +816,10 @@
     });
 
     function openLoadTemplate(slotId){
-      openModal(`<div class="modal-header"><h2>Load template</h2><button class="btn small" onclick="closeModal()">Close</button></div>${data.templates.map(t=>`<div class="template-card"><div class="row"><div class="title-line"><span class="emoji">${t.emoji}</span><strong>${escapeHtml(t.name)}</strong></div><button class="btn primary small" onclick="loadTemplateToSlot('${slotId}','${t.id}')">Load</button></div></div>`).join('')}`);
+      openModal(`<div class="modal-header"><h2>Load template</h2><button class="btn small" onclick="closeModal()">Close</button></div>${data.templates.map(t=>`<div class="template-card"><div class="row"><div class="title-line"><span class="emoji">${t.emoji}</span><div><strong>${escapeHtml(t.name)}</strong><div style="margin-top:4px">${templateSourceBadge(t)}</div></div></div><button class="btn primary small" onclick="loadTemplateToSlot('${slotId}','${t.id}')">Load</button></div></div>`).join('')}`);
     }
     function loadTemplateToSlot(slotId, templateId){ const slot=data.slots.find(s=>s.id===slotId); const t=data.templates.find(t=>t.id===templateId); slot.templateId=t.id; slot.emoji=t.emoji; slot.name=t.name.replace(' · Original',''); slot.exercises=cloneTemplateExercises(t); closeModal(); save(); }
-    function saveSlotAsTemplate(slotId){ const s=data.slots.find(s=>s.id===slotId); const name=prompt('Template name:', s.name); if(!name)return; data.templates.push({id:uid(), name, emoji:s.emoji, exercises:s.exercises.map(({instanceId,done,open,setLogs,cardioLog,...rest})=>rest)}); save(); }
+    function saveSlotAsTemplate(slotId){ const s=data.slots.find(s=>s.id===slotId); const name=prompt('Template name:', s.name); if(!name)return; data.templates.push({id:uid(), name, emoji:s.emoji, source:'Mak', exercises:s.exercises.map(({instanceId,done,open,setLogs,cardioLog,...rest})=>rest)}); save(); }
 
     function openAddExerciseToSlot(slotId){
       openModal(`<div class="modal-header"><h2>Add exercise</h2><button class="btn small" onclick="closeModal()">Close</button></div><div class="chip-row wrap">${groups.map(([g,e])=>`<button class="chip" onclick="filterModalExercises('${slotId}','${escapeHtml(g)}')">${e} ${escapeHtml(g)}</button>`).join('')}</div><div id="modalExerciseList">${modalExerciseList(slotId, 'All')}</div><button class="btn" onclick="openCustomForSlot('${slotId}')">+ Custom exercise</button>`);
@@ -790,7 +853,7 @@
     function deleteExercise(id){ if(confirm('Delete this exercise from library? Existing template references may show as deleted.')) { data.exercises=data.exercises.filter(e=>e.id!==id); closeModal(); save(); } }
 
     function openTemplateEditor(id){
-      const t = id ? data.templates.find(x=>x.id===id) : {id:'', name:'', emoji:'📋', exercises:[]};
+      const t = id ? data.templates.find(x=>x.id===id) : {id:'', name:'', emoji:'📋', source:'Mak', exercises:[]};
       window.editingTemplate = structuredClone(t);
       openModal(templateEditorHTML());
     }
@@ -820,7 +883,7 @@
     function importJSONPrompt(){
       openModal(`<div class="modal-header"><h2>Import JSON</h2><button class="btn small" onclick="closeModal()">Close</button></div><p class="muted">Paste a Mak Lifts JSON backup below. This replaces current app data.</p><textarea id="importText" style="min-height:240px"></textarea><button class="btn primary" onclick="importJSON()">Import Backup</button>`);
     }
-    function importJSON(){ try { const parsed=JSON.parse($('#importText').value); if(!parsed.exercises || !parsed.templates) throw new Error('Invalid backup'); data=parsed; closeModal(); save(); } catch(e){ alert('That does not look like a valid Mak Lifts backup.'); } }
+    function importJSON(){ try { const parsed=JSON.parse($('#importText').value); if(!parsed.exercises || !parsed.templates) throw new Error('Invalid backup'); data=ensureStarterContent(parsed); closeModal(); save(); } catch(e){ alert('That does not look like a valid Mak Lifts backup.'); } }
 
     window.addEventListener('beforeinstallprompt', e => { window.deferredPrompt = e; });
     render();
