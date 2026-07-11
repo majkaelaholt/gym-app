@@ -202,6 +202,12 @@
 
   <script>
     const STORAGE_KEY = 'makLifts.v1';
+    const SUPABASE_URL = 'https://svllyzivojseduuyciqs.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_4tWNoY-3p-sPgvTw-yEYzg_ksmG_YmA';
+    const CLOUD_ROW_ID = 'mak-lifts-main';
+    let cloudSaveTimer = null;
+    let cloudStatus = 'Checking cloud…';
+    let cloudBusy = false;
     const $ = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
     const uid = () => Math.random().toString(36).slice(2, 10);
@@ -288,8 +294,129 @@
         return parsed;
       } catch { return makeDefaultData(); }
     }
-    function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-    function save() { persist(); render(); }
+    function persist() {
+      data.updatedAt = Date.now();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+    function save(options = {}) {
+      persist();
+      render();
+      if (!options.skipCloud) queueCloudSave();
+    }
+
+    function setCloudStatus(message) {
+      cloudStatus = message;
+      const el = document.getElementById('cloudStatus');
+      if (el) el.textContent = message;
+    }
+
+    function cloudHeaders(extra = {}) {
+      return {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        ...extra
+      };
+    }
+
+    function queueCloudSave() {
+      clearTimeout(cloudSaveTimer);
+      setCloudStatus('Changes saved locally · cloud pending…');
+      cloudSaveTimer = setTimeout(() => pushToCloud(false), 900);
+    }
+
+    async function pushToCloud(showMessage = true) {
+      if (cloudBusy) return false;
+      cloudBusy = true;
+      setCloudStatus('Saving to cloud…');
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/app_data?on_conflict=id`, {
+          method: 'POST',
+          headers: cloudHeaders({
+            'Prefer': 'resolution=merge-duplicates,return=minimal'
+          }),
+          body: JSON.stringify({
+            id: CLOUD_ROW_ID,
+            data,
+            updated_at: new Date().toISOString()
+          })
+        });
+        if (!response.ok) throw new Error(await response.text());
+        const stamp = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+        setCloudStatus(`Cloud saved at ${stamp}`);
+        if (showMessage) showToast('Cloud backup saved');
+        return true;
+      } catch (error) {
+        console.error('Cloud save failed:', error);
+        setCloudStatus('Cloud save failed · local copy is safe');
+        if (showMessage) alert('Cloud save failed. Make sure the Supabase table and policies are created. Your local data is still safe.');
+        return false;
+      } finally {
+        cloudBusy = false;
+      }
+    }
+
+    async function fetchCloudRow() {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/app_data?id=eq.${encodeURIComponent(CLOUD_ROW_ID)}&select=data,updated_at`, {
+        headers: cloudHeaders()
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const rows = await response.json();
+      return rows[0] || null;
+    }
+
+    async function loadFromCloud(requireConfirm = true) {
+      if (cloudBusy) return;
+      if (requireConfirm && !confirm('Replace the data on this device with the cloud copy?')) return;
+      cloudBusy = true;
+      setCloudStatus('Loading cloud data…');
+      try {
+        const row = await fetchCloudRow();
+        if (!row?.data) {
+          setCloudStatus('No cloud backup yet');
+          alert('No cloud backup exists yet. Use “Push this device to cloud” first.');
+          return;
+        }
+        data = row.data;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        render();
+        setCloudStatus(`Loaded cloud copy from ${new Date(row.updated_at).toLocaleString()}`);
+        showToast('Cloud data loaded');
+      } catch (error) {
+        console.error('Cloud load failed:', error);
+        setCloudStatus('Cloud load failed · local copy unchanged');
+        alert('Cloud load failed. Make sure the Supabase table and policies are created.');
+      } finally {
+        cloudBusy = false;
+      }
+    }
+
+    async function initCloudSync() {
+      setCloudStatus('Checking cloud…');
+      try {
+        const row = await fetchCloudRow();
+        if (!row?.data) {
+          setCloudStatus('No cloud backup yet · saving this device…');
+          await pushToCloud(false);
+          return;
+        }
+        const cloudTime = Number(row.data.updatedAt || new Date(row.updated_at).getTime() || 0);
+        const localTime = Number(data.updatedAt || 0);
+        if (cloudTime > localTime) {
+          data = row.data;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          render();
+          setCloudStatus('Cloud copy loaded');
+        } else if (localTime > cloudTime) {
+          await pushToCloud(false);
+        } else {
+          setCloudStatus('Cloud is up to date');
+        }
+      } catch (error) {
+        console.error('Cloud startup check failed:', error);
+        setCloudStatus('Cloud not connected · local saving still works');
+      }
+    }
     function showToast(message) {
       const toast = $('#toast');
       if (!toast) return;
@@ -442,7 +569,7 @@
     }
 
     function renderSettings() {
-      $('#settings').innerHTML = `<div class="card"><h2>Backup</h2><p class="muted">Since this saves locally in your browser, export JSON before clearing data or switching devices.</p><div class="grid2"><button class="btn primary" onclick="exportJSON()">Export JSON</button><button class="btn" onclick="importJSONPrompt()">Import JSON</button></div></div><div class="card"><h2>Week</h2><p class="muted">Resets the 4 workout slots back to planned and clears this week's in-workout checkmarks/log inputs.</p><button id="resetWeekButton" class="btn primary" type="button" onclick="window.resetWeek(event)" data-action="reset-week">Reset Week</button></div><div class="card danger-zone"><h2>Danger zone</h2><p class="muted">This resets everything back to the seeded Mak Lifts starter app.</p><button class="btn red" onclick="resetApp()">Reset App</button></div>`;
+      $('#settings').innerHTML = `<div class="card"><h2>☁️ Cloud Save</h2><p class="muted">Mak Lifts keeps a local copy and automatically backs up changes to Supabase.</p><div class="pill" id="cloudStatus">${escapeHtml(cloudStatus)}</div><div class="grid2" style="margin-top:12px"><button class="btn primary" onclick="pushToCloud()">Push this device to cloud</button><button class="btn" onclick="loadFromCloud(true)">Load cloud onto this device</button></div><p class="tiny" style="margin-top:10px">Use Push after setting up Supabase for the first time. Use Load on a new phone or computer.</p></div><div class="card"><h2>JSON Backup</h2><p class="muted">Keep an occasional downloadable backup too, especially before major app updates.</p><div class="grid2"><button class="btn primary" onclick="exportJSON()">Export JSON</button><button class="btn" onclick="importJSONPrompt()">Import JSON</button></div></div><div class="card"><h2>Week</h2><p class="muted">Resets the 4 workout slots back to planned and clears this week's in-workout checkmarks/log inputs.</p><button id="resetWeekButton" class="btn primary" type="button" onclick="window.resetWeek(event)" data-action="reset-week">Reset Week</button></div><div class="card danger-zone"><h2>Danger zone</h2><p class="muted">This resets everything back to the seeded Mak Lifts starter app.</p><button class="btn red" onclick="resetApp()">Reset App</button></div>`;
     }
 
     function chooseToday(id, ev){
@@ -625,6 +752,7 @@
 
     window.addEventListener('beforeinstallprompt', e => { window.deferredPrompt = e; });
     render();
+    initCloudSync();
   </script>
 </body>
 </html>
